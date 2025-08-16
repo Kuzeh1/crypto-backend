@@ -30,10 +30,20 @@ async def prices(ids: str = "bitcoin,ethereum", vs_currency: str = "usd", includ
         "vs_currencies": vs_currency,
         "include_24hr_change": str(include_24hr_change).lower()
     }
-    async with httpx.AsyncClient(timeout=10) as client:
+
+    async with httpx.AsyncClient(
+        timeout=10,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; CryptoTracker/1.0)"}
+    ) as client:
         r = await client.get(f"{COINGECKO}/simple/price", params=params)
+
+    # DEBUG: log CoinGecko response in Render logs
+    print("CoinGecko status:", r.status_code)
+    print("CoinGecko response:", r.text)
+
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail="CoinGecko error")
+
     return r.json()
 
 @app.get("/api/market_chart/{coin_id}")
@@ -42,8 +52,17 @@ async def market_chart(coin_id: str, vs_currency: str = "usd", days: int = 7):
     Example: /api/market_chart/bitcoin?vs_currency=usd&days=7
     """
     params = {"vs_currency": vs_currency, "days": days}
-    async with httpx.AsyncClient(timeout=15) as client:
+    async with httpx.AsyncClient(
+        timeout=15,
+        headers={"User-Agent": "Mozilla/5.0 (compatible; CryptoTracker/1.0)"}
+    ) as client:
         r = await client.get(f"{COINGECKO}/coins/{coin_id}/market_chart", params=params)
+
+    # DEBUG: log response for troubleshooting
+    print(f"Market chart {coin_id} status:", r.status_code)
+    print("Response:", r.text)
+
     if r.status_code != 200:
         raise HTTPException(status_code=502, detail="CoinGecko market chart error")
+
     return r.json()
